@@ -112,21 +112,21 @@ class Game:
         down = int(input('Enter steps for down:'))
 
          
-        for i in range(up):
+        for _ in range(up):
             self.user_position['y'] = self.user_position['y'] - 1
             if self.map_condition[self.user_position['y']][self.user_position['x']] == self.obs:
                 print('Sorry! Youre over up steps!')
                 self.show_map()
                 return
         
-        for i in range(right):
+        for _ in range(right):
             self.user_position['x'] = self.user_position['x'] + 1
             if self.map_condition[self.user_position['y']][self.user_position['x']] == self.obs:
                 self.show_map()
                 print('Sorry! Youre over right steps!')
                 return
         
-        for i in range(down):
+        for _ in range(down):
             self.user_position['y'] = self.user_position['y'] + 1
             if self.map_condition[self.user_position['y']][self.user_position['x']] == self.obs:
                 print('Sorry! Youre over down steps!')
