@@ -4,4 +4,5 @@ class Game:
         pass # next
 
     def start(self):
+        print('halo')
         pass # next
