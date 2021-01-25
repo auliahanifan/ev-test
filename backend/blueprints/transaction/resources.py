@@ -7,7 +7,7 @@ from ..user.model import User
 from ..cart.model import Cart
 from ..transaction_detail.model import TransactionDetails
 from flask_jwt_extended import jwt_required, get_jwt_claims
-from blueprints import db, app, adminRequired
+from blueprints import db, app, adminRequired, TESTING
 import datetime
 import time
 
@@ -16,6 +16,7 @@ api_transaction = Api(bp_transaction)
 
 
 class TransactionResource(Resource):
+    queue = 1
 
     def options(self, transaction_id=None):
         return {'status': 'success'}, 200, {'Content-Type': 'application/json'}
@@ -55,14 +56,15 @@ class TransactionResource(Resource):
         # iterate to check availability the stock, and also get the total price
         for item in cart_qry:
             product_query = Product.query.filter_by(product_id = item.product_id).first()    
-            
-            time.sleep(8)
+
             # check the availability of stock 
             if product_query.product_stock < item.qty:
                 db.session.delete(item)
                 db.session.commit()
                 deleted_cart +=1
             else: 
+                if TESTING:
+                    time.sleep(item.user_id * 2)
                 total_price += item.price
             
             products_before.append(product_query)
@@ -76,7 +78,7 @@ class TransactionResource(Resource):
         db.session.commit()
 
         transaction_id = transaction.transaction_id
-        
+
         # iterate again to transaction
         for item in cart_qry:
             product_qry = Product.query.filter_by(product_id = item.product_id).first()
@@ -100,6 +102,7 @@ class TransactionResource(Resource):
                 db.session.rollback()
                 return {'status': 'Stock Not Enough'}, 400, {'Content-Type': 'application/json'}
         
+
         return marshal(transaction, Transaction.response_fields), 200, {'Content-Type': 'application/json'}
         
     @jwt_required
