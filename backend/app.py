@@ -3,6 +3,7 @@ from flask_restful import Api
 from logging.handlers import RotatingFileHandler
 from cachelib import SimpleCache
 from blueprints import app, manager
+from data.seeder import seeder
 
 cache = SimpleCache()
 api = Api(app, catch_all_404s=True)
@@ -11,6 +12,10 @@ if __name__ == '__main__':
     try:
         if sys.argv[1] == 'db':
             manager.run()
+
+        # To seed
+        elif sys.argv[1] == 'seed':
+            seeder()
 
     # define log format and create a rotating log with max size of 10MB and max backup to 10 files 
     except Exception as e:
