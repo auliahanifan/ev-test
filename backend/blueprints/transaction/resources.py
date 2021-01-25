@@ -38,13 +38,11 @@ class TransactionResource(Resource):
         claims = get_jwt_claims()
         user_id = claims['user_id']
 
-        db.session.begin(subtransactions=True)
+        # db.session.begin(subtransactions=True)
 
         cart_qry = Cart.query.filter_by(user_id = int(user_id)).all()
         cart_qry_temp = cart_qry
 
-        products_before = []
-        product_after = []
 
         if cart_qry == []:
             return {'status': 'FAILED', 'note': 'ZERO_CART'}, 400
@@ -53,21 +51,23 @@ class TransactionResource(Resource):
         deleted_cart = 0
         total_price = 0
 
+        qty_list = []
         # iterate to check availability the stock, and also get the total price
         for item in cart_qry:
             product_query = Product.query.filter_by(product_id = item.product_id).first()    
 
+            qty_list.append(product_query.product_stock)
             # check the availability of stock 
             if product_query.product_stock < item.qty:
                 db.session.delete(item)
                 db.session.commit()
                 deleted_cart +=1
             else: 
+                # for testing purpose
                 if TESTING:
                     time.sleep(item.user_id * 2)
                 total_price += item.price
             
-            products_before.append(product_query)
             
         if deleted_cart > 0:
             return {'status': 'Stock Not Enough'}, 400, {'Content-Type': 'application/json'}        
@@ -80,10 +80,14 @@ class TransactionResource(Resource):
         transaction_id = transaction.transaction_id
 
         # iterate again to transaction
+        stock_diff = []
         for item in cart_qry:
             product_qry = Product.query.filter_by(product_id = item.product_id).first()
             # to decrease the stock of the product
+            stock_before = product_qry.product_stock
             product_qry.product_stock -= item.qty
+            stock_after = product_qry.product_stock
+            diff = stock_after - stock_before
             db.session.commit()
 
             trans_detail = TransactionDetails(transaction_id, item.product_id, item.product_name, item.qty, item.price)
@@ -95,13 +99,21 @@ class TransactionResource(Resource):
             db.session.delete(item)
             db.session.commit()
         
-        for item in cart_qry_temp:
+        # Due to i can't find how to Rollback in Flask-Sqlalchemy, just do this :)
+        rollback = False
+        for key, item in enumerate(cart_qry_temp):
             product_query = Product.query.filter_by(product_id = item.product_id).first()    
-            product_after.append(product_query)
             if product_query.product_stock < 0:
-                db.session.rollback()
-                return {'status': 'Stock Not Enough'}, 400, {'Content-Type': 'application/json'}
-        
+                rollback = True
+
+        if rollback:
+            for key, item in enumerate(cart_qry_temp):
+                product_query = Product.query.filter_by(product_id = item.product_id).first()    
+                product_query.product_stock += item.qty
+                db.session.commit()            
+            db.session.delete(transaction)
+            db.session.commit()
+            return {'status': 'Stock Not Enough'}, 400, {'Content-Type': 'application/json'}
 
         return marshal(transaction, Transaction.response_fields), 200, {'Content-Type': 'application/json'}
         

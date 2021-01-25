@@ -10,9 +10,6 @@ bp_category = Blueprint('category', __name__)
 api = Api(bp_category)
 
 class CategoryResource(Resource):
-
-    def __init__(self):
-        pass
     
     def options(self, id=None):
         return {'status': 'success'}, 200, {'Content-Type': 'application/json'}
@@ -79,9 +76,6 @@ class CategoryResource(Resource):
 
 
 class CategoryList(Resource):
-
-    def __init__(self):
-        pass
     
     def options(self):
         return {'status': 'success'}, 200, {'Content-Type': 'application/json'}
