@@ -56,6 +56,7 @@ class TransactionResource(Resource):
         for item in cart_qry:
             product_query = Product.query.filter_by(product_id = item.product_id).first()    
             
+            time.sleep(8)
             # check the availability of stock 
             if product_query.product_stock < item.qty:
                 db.session.delete(item)
