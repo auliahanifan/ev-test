@@ -10,8 +10,6 @@ bp_product = Blueprint('product', __name__)
 api_product = Api(bp_product)
 
 class ProductResource(Resource):
-    def __init__(self):
-        pass
         
     def options(self, product_id=None):
         return {'status': 'success'}, 200, {'Content-Type': 'application/json'}
