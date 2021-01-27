@@ -113,7 +113,7 @@ class TransactionResource(Resource):
                 db.session.commit()            
             db.session.delete(transaction)
             db.session.commit()
-            return {'status': 'Stock Not Enough'}, 400, {'Content-Type': 'application/json'}
+            return {'status': 'Stock Not Enough Due To High Traffic'}, 400, {'Content-Type': 'application/json'}
 
         return marshal(transaction, Transaction.response_fields), 200, {'Content-Type': 'application/json'}
         

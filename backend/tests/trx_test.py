@@ -36,12 +36,12 @@ class TestClientCrud():
 
         assert res.status_code == 200
 
-    def call(self, client, token):
+    def call(self, client, token, index):
         res = client.post('/api/transaction', 
                         headers={'Authorization': 'Bearer ' + token},
                         data=json.dumps(self.data),
                         content_type='application/json')
-        return res
+        return res, index
         
     def test_transaction_input(self, client):
 
@@ -63,13 +63,14 @@ class TestClientCrud():
         }
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-            for key, token in enumerate(token_list):
-                future = executor.submit(self.call, client, token)
-                return_value = future.result()
-                if key == 0:
-                    assert return_value.status_code == 200
-                else:
+            fs = [executor.submit(self.call, client, token, index) for index, token in enumerate(token_list)]
+            for f in concurrent.futures.as_completed(fs):
+                return_value, index = f.result()
+                if index == 0:
                     assert return_value.status_code == 400
+                else:
+                    assert return_value.status_code == 200
+
         
     def test_product_put(self, client):
         token = create_token_admin_super()
